@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Healthcare System - Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+
+        .nav-links a:hover {
+            opacity: 0.8;
+        }
+
+        .btn-logout {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border: 1px solid white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+        }
+
+        /* Cards */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        /* Forms */
+        .form-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: opacity 0.3s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        /* Footer */
+        footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 4rem;
+        }
+
+        /* Hidden sections */
+        .hidden {
+            display: none;
+        }
+
+        .show {
+            display: block;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab {
+            padding: 1rem 2rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1rem;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">🏥 Digital Healthcare System - Admin</div>
+            <ul class="nav-links">
+                <li><a href="#" onclick="showSection('home')">Home</a></li>
+                <li><a href="#" onclick="showSection('appointments')">Appointments</a></li>
+                <li><a href="#" onclick="showSection('patients')">Patients</a></li>
+                <li><a href="#" onclick="showSection('doctors')">Doctors</a></li>
+                <li><span id="adminName" style="color: white;">Admin</span></li>
+                <li><button class="btn-logout" onclick="logout()">Logout</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <div id="home" class="hero section-content">
+        <h1>Welcome to Digital Healthcare System</h1>
+        <p>Admin Dashboard - Manage Everything</p>
+    </div>
+
+    <div class="container">
+        <!-- Home Section -->
+        <div id="home-content" class="section section-content">
+            <div class="cards">
+                <div class="card">
+                    <h3>📅 Book Appointment</h3>
+                    <p>Schedule appointments with our qualified doctors easily and conveniently.</p>
+                    <button class="btn" onclick="showSection('appointments')">Book Now</button>
+                </div>
+                <div class="card">
+                    <h3>👨‍⚕️ Expert Doctors</h3>
+                    <p>Connect with experienced healthcare professionals across various specialties.</p>
+                    <button class="btn" onclick="showSection('doctors')">View Doctors</button>
+                </div>
+                <div class="card">
+                    <h3>📋 Patient Records</h3>
+                    <p>Secure and accessible patient medical records management system.</p>
+                    <button class="btn" onclick="showSection('patients')">Manage Records</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appointments Section -->
+        <div id="appointments-content" class="section section-content hidden">
+            <h2>Appointment Management</h2>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('book-appointment')">Book Appointment</button>
+                <button class="tab" onclick="showTab('view-appointments')">View Appointments</button>
+            </div>
+
+            <div id="book-appointment" class="tab-content">
+                <div class="form-container">
+                    <h3>Book New Appointment</h3>
+                    <div id="appointment-alert"></div>
+                    <form id="appointmentForm">
+                        <div class="form-group">
+                            <label>Patient Name</label>
+                            <input type="text" name="patient_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Doctor</label>
+                            <select name="doctor_id" id="doctorSelect" required>
+                                <option value="">Select Doctor</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Appointment Date</label>
+                            <input type="date" name="appointment_date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Appointment Time</label>
+                            <input type="time" name="appointment_time" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Reason for Visit</label>
+                            <textarea name="reason" required></textarea>
+                        </div>
+                        <button type="submit" class="btn">Book Appointment</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="view-appointments" class="tab-content hidden">
+                <h3>All Appointments</h3>
+                <table id="appointmentsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Patient</th>
+                            <th>Doctor</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="appointmentsBody">
+                        <tr>
+                            <td colspan="6">Loading appointments...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Patients Section -->
+        <div id="patients-content" class="section section-content hidden">
+            <h2>Patient Management</h2>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('add-patient')">Add Patient</button>
+                <button class="tab" onclick="showTab('view-patients')">View Patients</button>
+            </div>
+
+            <div id="add-patient" class="tab-content">
+                <div class="form-container">
+                    <h3>Register New Patient</h3>
+                    <div id="patient-alert"></div>
+                    <form id="patientForm">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="tel" name="phone" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Date of Birth</label>
+                            <input type="date" name="dob" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <select name="gender" required>
+                                <option value="">Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Address</label>
+                            <textarea name="address" required></textarea>
+                        </div>
+                        <button type="submit" class="btn">Register Patient</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="view-patients" class="tab-content hidden">
+                <h3>All Patients</h3>
+                <table id="patientsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Gender</th>
+                            <th>DOB</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patientsBody">
+                        <tr>
+                            <td colspan="6">Loading patients...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Doctors Section -->
+        <div id="doctors-content" class="section section-content hidden">
+            <h2>Doctor Management</h2>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('add-doctor')">Add Doctor</button>
+                <button class="tab" onclick="showTab('view-doctors')">View Doctors</button>
+            </div>
+
+            <div id="add-doctor" class="tab-content">
+                <div class="form-container">
+                    <h3>Add New Doctor</h3>
+                    <div id="doctor-alert"></div>
+                    <form id="doctorForm">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Specialization</label>
+                            <input type="text" name="specialization" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="tel" name="phone" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Experience (years)</label>
+                            <input type="number" name="experience" required>
+                        </div>
+                        <button type="submit" class="btn">Add Doctor</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="view-doctors" class="tab-content hidden">
+                <h3>All Doctors</h3>
+                <table id="doctorsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Specialization</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Experience</th>
+                        </tr>
+                    </thead>
+                    <tbody id="doctorsBody">
+                        <tr>
+                            <td colspan="6">Loading doctors...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Digital Healthcare System. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let currentUser = null;
+
+        // Check authentication on page load
+        window.onload = function() {
+            const userStr = localStorage.getItem('user');
+            if (!userStr) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            currentUser = JSON.parse(userStr);
+            if (currentUser.role !== 'admin') {
+                alert('Access denied. Admin access only.');
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            document.getElementById('adminName').textContent = currentUser.name;
+        };
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Navigation
+        function showSection(section) {
+            document.querySelectorAll('.section-content').forEach(el => {
+                el.classList.add('hidden');
+            });
+            
+            if (section === 'home') {
+                document.getElementById('home').classList.remove('hidden');
+                document.getElementById('home-content').classList.remove('hidden');
+            } else {
+                document.getElementById('home').classList.add('hidden');
+                document.getElementById(`${section}-content`).classList.remove('hidden');
+            }
+
+            if (section === 'appointments') loadDoctorsForSelect();
+            if (section === 'doctors') loadDoctors();
+            if (section === 'patients') loadPatients();
+        }
+
+        function showTab(tabName) {
+            const parent = event.target.parentElement.parentElement;
+            parent.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.add('hidden');
+            });
+            parent.querySelectorAll('.tab').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.remove('hidden');
+            event.target.classList.add('active');
+
+            if (tabName === 'view-appointments') loadAppointments();
+            if (tabName === 'view-patients') loadPatients();
+            if (tabName === 'view-doctors') loadDoctors();
+        }
+
+        // Appointments
+        document.getElementById('appointmentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await fetch(`${API_URL}/appointments`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    showAlert('appointment-alert', 'Appointment booked successfully!', 'success');
+                    e.target.reset();
+                } else {
+                    showAlert('appointment-alert', 'Failed to book appointment', 'error');
+                }
+            } catch (error) {
+                showAlert('appointment-alert', 'Error: ' + error.message, 'error');
+            }
+        });
+
+        async function loadAppointments() {
+            try {
+                const response = await fetch(`${API_URL}/appointments`);
+                const appointments = await response.json();
+                const tbody = document.getElementById('appointmentsBody');
+                
+                if (appointments.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6">No appointments found</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = appointments.map(apt => `
+                    <tr>
+                        <td>${apt.id}</td>
+                        <td>${apt.patient_name}</td>
+                        <td>${apt.doctor_name}</td>
+                        <td>${apt.appointment_date}</td>
+                        <td>${apt.appointment_time}</td>
+                        <td>${apt.status}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                document.getElementById('appointmentsBody').innerHTML = 
+                    '<tr><td colspan="6">Error loading appointments</td></tr>';
+            }
+        }
+
+        // Patients
+        document.getElementById('patientForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await fetch(`${API_URL}/patients`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    showAlert('patient-alert', 'Patient registered successfully!', 'success');
+                    e.target.reset();
+                } else {
+                    showAlert('patient-alert', 'Failed to register patient', 'error');
+                }
+            } catch (error) {
+                showAlert('patient-alert', 'Error: ' + error.message, 'error');
+            }
+        });
+
+        async function loadPatients() {
+            try {
+                const response = await fetch(`${API_URL}/patients`);
+                const patients = await response.json();
+                const tbody = document.getElementById('patientsBody');
+                
+                if (patients.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6">No patients found</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = patients.map(patient => `
+                    <tr>
+                        <td>${patient.id}</td>
+                        <td>${patient.name}</td>
+                        <td>${patient.email}</td>
+                        <td>${patient.phone}</td>
+                        <td>${patient.gender}</td>
+                        <td>${patient.dob}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                document.getElementById('patientsBody').innerHTML = 
+                    '<tr><td colspan="6">Error loading patients</td></tr>';
+            }
+        }
+
+        // Doctors
+        document.getElementById('doctorForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await fetch(`${API_URL}/doctors`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    showAlert('doctor-alert', 'Doctor added successfully!', 'success');
+                    e.target.reset();
+                } else {
+                    showAlert('doctor-alert', 'Failed to add doctor', 'error');
+                }
+            } catch (error) {
+                showAlert('doctor-alert', 'Error: ' + error.message, 'error');
+            }
+        });
+
+        async function loadDoctors() {
+            try {
+                const response = await fetch(`${API_URL}/doctors`);
+                const doctors = await response.json();
+                const tbody = document.getElementById('doctorsBody');
+                
+                if (doctors.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6">No doctors found</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = doctors.map(doctor => `
+                    <tr>
+                        <td>${doctor.id}</td>
+                        <td>${doctor.name}</td>
+                        <td>${doctor.specialization}</td>
+                        <td>${doctor.email}</td>
+                        <td>${doctor.phone}</td>
+                        <td>${doctor.experience} years</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                document.getElementById('doctorsBody').innerHTML = 
+                    '<tr><td colspan="6">Error loading doctors</td></tr>';
+            }
+        }
+
+        async function loadDoctorsForSelect() {
+            try {
+                const response = await fetch(`${API_URL}/doctors`);
+                const doctors = await response.json();
+                const select = document.getElementById('doctorSelect');
+                
+                select.innerHTML = '<option value="">Select Doctor</option>' + 
+                    doctors.map(doctor => 
+                        `<option value="${doctor.id}">${doctor.name} - ${doctor.specialization}</option>`
+                    ).join('');
+            } catch (error) {
+                console.error('Error loading doctors:', error);
+            }
+        }
+
+        function showAlert(elementId, message, type) {
+            const alertDiv = document.getElementById(elementId);
+            alertDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => alertDiv.innerHTML = '', 5000);
+        }
+    </script>
+</body>
+</html>

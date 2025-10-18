@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Dashboard - Healthcare System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-name {
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+        }
+
+        .btn-logout {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 0.6rem 1.5rem;
+            border: 1px solid white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        /* Welcome Card */
+        .welcome-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+            margin-bottom: 2rem;
+        }
+
+        .welcome-card h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-card p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        /* Stats Cards */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            border-left: 4px solid #667eea;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .stat-card h4 {
+            font-size: 2.5rem;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card p {
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* Action Cards */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .card p {
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Buttons */
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Section */
+        .section {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        .section.show {
+            display: block;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Status Badge */
+        .status {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status.scheduled {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status.completed {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .status.cancelled {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .modal-header h3 {
+            color: #667eea;
+            font-size: 1.5rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #999;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #667eea;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+
+            .welcome-card {
+                padding: 1.5rem;
+            }
+
+            .welcome-card h1 {
+                font-size: 1.5rem;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            nav {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+
+            th, td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav>
+            <div class="logo">
+                🏥 Patient Portal
+            </div>
+            <div class="user-info">
+                <span class="user-name" id="userName">Loading...</span>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Welcome Card -->
+        <div class="welcome-card">
+            <h1>Welcome, <span id="welcomeName">Patient</span>! 👋</h1>
+            <p>Manage your health appointments and connect with healthcare professionals</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats">
+            <div class="stat-card">
+                <h4 id="totalAppointments">0</h4>
+                <p>Total Appointments</p>
+            </div>
+            <div class="stat-card">
+                <h4 id="upcomingAppointments">0</h4>
+                <p>Upcoming</p>
+            </div>
+            <div class="stat-card">
+                <h4 id="completedAppointments">0</h4>
+                <p>Completed</p>
+            </div>
+        </div>
+
+        <!-- Action Cards -->
+        <div class="cards">
+            <div class="card">
+                <h3>📅 Book Appointment</h3>
+                <p>Schedule a new appointment with our experienced doctors at your convenience.</p>
+                <button class="btn" onclick="showModal('bookAppointmentModal')">Book Now</button>
+            </div>
+            <div class="card">
+                <h3>📋 My Appointments</h3>
+                <p>View and manage all your past and upcoming medical appointments.</p>
+                <button class="btn" onclick="showAppointments()">View Appointments</button>
+            </div>
+            <div class="card">
+                <h3>👨‍⚕️ Our Doctors</h3>
+                <p>Browse through our team of qualified doctors and their specializations.</p>
+                <button class="btn" onclick="showModal('doctorsModal')">View Doctors</button>
+            </div>
+        </div>
+
+        <!-- Appointments Section -->
+        <div class="section" id="appointmentsSection">
+            <h2>My Appointments</h2>
+            <div id="appointmentsAlert"></div>
+            <table id="appointmentsTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Doctor</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="appointmentsBody">
+                    <tr>
+                        <td colspan="5" class="loading">Loading appointments...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Book Appointment Modal -->
+    <div id="bookAppointmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📅 Book New Appointment</h3>
+                <button class="close-btn" onclick="closeModal('bookAppointmentModal')">&times;</button>
+            </div>
+            <div id="bookAlert"></div>
+            <form id="bookAppointmentForm">
+                <div class="form-group">
+                    <label>Select Doctor *</label>
+                    <select name="doctor_id" id="doctorSelect" required>
+                        <option value="">Loading doctors...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Appointment Date *</label>
+                    <input type="date" name="appointment_date" id="appointmentDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Appointment Time *</label>
+                    <input type="time" name="appointment_time" required>
+                </div>
+                <div class="form-group">
+                    <label>Reason for Visit *</label>
+                    <textarea name="reason" placeholder="Please describe your symptoms or reason for visit..." required></textarea>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Book Appointment</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Doctors Modal -->
+    <div id="doctorsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>👨‍⚕️ Available Doctors</h3>
+                <button class="close-btn" onclick="closeModal('doctorsModal')">&times;</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Specialization</th>
+                        <th>Experience</th>
+                    </tr>
+                </thead>
+                <tbody id="doctorsBody">
+                    <tr>
+                        <td colspan="3" class="loading">Loading doctors...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let currentUser = null;
+
+        // Check authentication on page load
+        window.onload = function() {
+            const userStr = localStorage.getItem('user');
+            if (!userStr) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            currentUser = JSON.parse(userStr);
+            if (currentUser.role !== 'patient') {
+                alert('Access denied. Patient access only.');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Set user name
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('welcomeName').textContent = currentUser.name;
+            
+            // Set minimum date for appointment booking (today)
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('appointmentDate').setAttribute('min', today);
+            
+            // Load initial data
+            loadDashboardStats();
+            loadDoctorsForSelect();
+        };
+
+        // Logout function
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Modal functions
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+            if (modalId === 'doctorsModal') {
+                loadDoctors();
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('show');
+            }
+        }
+
+        // Load dashboard statistics
+        async function loadDashboardStats() {
+            try {
+                const response = await fetch(`${API_URL}/appointments`);
+                const appointments = await response.json();
+                
+                // Filter appointments for current user
+                const myAppointments = appointments.filter(apt => 
+                    apt.patient_name === currentUser.name
+                );
+                
+                // Calculate statistics
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const upcoming = myAppointments.filter(apt => {
+                    const aptDate = new Date(apt.appointment_date);
+                    return apt.status === 'Scheduled' && aptDate >= today;
+                });
+                
+                const completed = myAppointments.filter(apt => 
+                    apt.status === 'Completed'
+                );
+                
+                // Update stats
+                document.getElementById('totalAppointments').textContent = myAppointments.length;
+                document.getElementById('upcomingAppointments').textContent = upcoming.length;
+                document.getElementById('completedAppointments').textContent = completed.length;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load doctors for select dropdown
+        async function loadDoctorsForSelect() {
+            try {
+                const response = await fetch(`${API_URL}/doctors`);
+                const doctors = await response.json();
+                const select = document.getElementById('doctorSelect');
+                
+                if (doctors.length === 0) {
+                    select.innerHTML = '<option value="">No doctors available</option>';
+                    return;
+                }
+                
+                select.innerHTML = '<option value="">Select a doctor</option>' + 
+                    doctors.map(doctor => 
+                        `<option value="${doctor.id}">${doctor.name} - ${doctor.specialization} (${doctor.experience} years exp.)</option>`
+                    ).join('');
+            } catch (error) {
+                console.error('Error loading doctors:', error);
+                document.getElementById('doctorSelect').innerHTML = 
+                    '<option value="">Error loading doctors</option>';
+            }
+        }
+
+        // Load doctors in modal
+        async function loadDoctors() {
+            try {
+                const response = await fetch(`${API_URL}/doctors`);
+                const doctors = await response.json();
+                const tbody = document.getElementById('doctorsBody');
+                
+                if (doctors.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" class="empty-state"><h3>No doctors available</h3><p>Please check back later</p></td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = doctors.map(doctor => `
+                    <tr>
+                        <td><strong>${doctor.name}</strong></td>
+                        <td>${doctor.specialization}</td>
+                        <td>${doctor.experience} years</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                document.getElementById('doctorsBody').innerHTML = 
+                    '<tr><td colspan="3" class="empty-state">Error loading doctors</td></tr>';
+            }
+        }
+
+        // Book appointment form submission
+        document.getElementById('bookAppointmentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            data.patient_name = currentUser.name;
+            
+            try {
+                const response = await fetch(`${API_URL}/appointments`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert('bookAlert', '✅ Appointment booked successfully!', 'success');
+                    e.target.reset();
+                    loadDashboardStats();
+                    
+                    // Close modal after 2 seconds
+                    setTimeout(() => {
+                        closeModal('bookAppointmentModal');
+                        document.getElementById('bookAlert').innerHTML = '';
+                    }, 2000);
+                } else {
+                    showAlert('bookAlert', '❌ ' + (result.error || 'Failed to book appointment'), 'error');
+                }
+            } catch (error) {
+                showAlert('bookAlert', '❌ Error: ' + error.message, 'error');
+            }
+        });
+
+        // Show appointments section
+        function showAppointments() {
+            const section = document.getElementById('appointmentsSection');
+            section.classList.add('show');
+            section.scrollIntoView({ behavior: 'smooth' });
+            loadMyAppointments();
+        }
+
+        // Load user's appointments
+        async function loadMyAppointments() {
+            try {
+                const response = await fetch(`${API_URL}/appointments`);
+                const appointments = await response.json();
+                
+                // Filter appointments for current user
+                const myAppointments = appointments.filter(apt => 
+                    apt.patient_name === currentUser.name
+                );
+                
+                // Sort by date (newest first)
+                myAppointments.sort((a, b) => {
+                    const dateA = new Date(a.appointment_date + ' ' + a.appointment_time);
+                    const dateB = new Date(b.appointment_date + ' ' + b.appointment_time);
+                    return dateB - dateA;
+                });
+                
+                const tbody = document.getElementById('appointmentsBody');
+                
+                if (myAppointments.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><h3>No appointments found</h3><p>Book your first appointment to get started</p></td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = myAppointments.map(apt => {
+                    const aptDate = new Date(apt.appointment_date);
+                    const formattedDate = aptDate.toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric' 
+                    });
+                    
+                    return `
+                        <tr>
+                            <td><strong>${formattedDate}</strong></td>
+                            <td>${apt.appointment_time}</td>
+                            <td>${apt.doctor_name || 'N/A'}</td>
+                            <td>${apt.reason}</td>
+                            <td><span class="status ${apt.status.toLowerCase()}">${apt.status}</span></td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                document.getElementById('appointmentsBody').innerHTML = 
+                    '<tr><td colspan="5" class="empty-state">Error loading appointments</td></tr>';
+                console.error('Error loading appointments:', error);
+            }
+        }
+
+        // Show alert function
+        function showAlert(elementId, message, type) {
+            const alertDiv = document.getElementById(elementId);
+            alertDiv.innerHTML = `<div class="alert alert-${type} show">${message}</div>`;
+            setTimeout(() => {
+                const alert = alertDiv.querySelector('.alert');
+                if (alert) alert.classList.remove('show');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
