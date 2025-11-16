@@ -315,7 +315,10 @@ async function loadDashboardStats(){
         const normalized = apps.map(a=>({...a, appointment_time: extractHHMM(a.appointment_time)}));
         const myApps = normalized.filter(a=>a.doctor_id === doctorId);
         const today = new Date().toISOString().split('T')[0];
-        const todayApps = myApps.filter(a=>a.appointment_date === today);
+        const todayApps = myApps.filter(a =>
+    String(a.appointment_date).split("T")[0] === today
+);
+
         const completed = myApps.filter(a=>a.status === 'Completed');
         document.getElementById('todayAppointments').textContent = todayApps.length;
         document.getElementById('totalAppointments').textContent = myApps.length;
@@ -329,7 +332,11 @@ async function loadTodayAppointments(){
         const apps = await res.json();
         const normalized = apps.map(a=>({...a, appointment_time: extractHHMM(a.appointment_time)}));
         const today = new Date().toISOString().split('T')[0];
-        const todayApps = normalized.filter(a=>a.doctor_id===doctorId && (a.appointment_date===today));
+        const todayApps = normalized.filter(a => {
+    const apptDate = String(a.appointment_date).split("T")[0];
+    return a.doctor_id === doctorId && apptDate === today;
+});
+
         const tbody = document.getElementById('todayBody');
         if(!todayApps.length){ tbody.innerHTML = `<tr><td colspan="5">No appointments today</td></tr>`; return; }
         tbody.innerHTML = todayApps.map(a=>`

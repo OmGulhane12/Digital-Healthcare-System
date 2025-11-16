@@ -267,7 +267,7 @@ app.post("/api/appointments", (req, res) => {
 
     resolvePatientId({ patient_email, patient_name }, (err, patientId) => {
         if (err) return res.status(500).json({ error: err.message });
-
+    
         // Validate availability
         db.query(
             `SELECT id FROM appointments
@@ -281,28 +281,60 @@ app.post("/api/appointments", (req, res) => {
 
                 // Insert
                 db.query(
-                    `INSERT INTO appointments
-                     (patient_id, patient_name, patient_email, doctor_id,
-                      appointment_date, appointment_time, reason, status)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, 'Scheduled')`,
-                    [
-                        patientId,
-                        patient_name,
-                        patient_email,
-                        doctor_id,
-                        appointment_date,
-                        toMySQLTime(normalized),
-                        reason,
-                    ],
-                    (err3, result) => {
-                        if (err3)
-                            return res.status(500).json({ error: err3.message });
-                        res.status(201).json({
-                            message: "Appointment created",
-                            id: result.insertId,
-                        });
-                    }
-                );
+    `INSERT INTO appointments
+     (patient_id, patient_name, patient_email, doctor_id,
+      appointment_date, appointment_time, reason, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'Scheduled')`,
+    [
+        patientId,
+        patient_name,
+        patient_email,
+        doctor_id,
+        appointment_date,
+        toMySQLTime(normalized),
+        reason,
+    ],
+    (err3, result) => {
+        if (err3)
+            return res.status(500).json({ error: err3.message });
+
+        // -----------------------------
+        // 📧 SEND EMAIL NOTIFICATION
+        // -----------------------------
+        const mailOptions = {
+            from: process.env.MAIL_USER,
+            to: patient_email,
+            subject: "Appointment Confirmation - Digital Healthcare",
+            html: `
+                <h2>Appointment Confirmed</h2>
+                <p>Dear <b>${patient_name}</b>,</p>
+                <p>Your appointment has been successfully booked.</p>
+                <p><b>Date:</b> ${appointment_date}</p>
+                <p><b>Time:</b> ${normalized}</p>
+                <p><b>Reason:</b> ${reason}</p>
+                <p>Thank you for choosing our healthcare service.</p>
+            `
+        };
+
+        transporter.sendMail(mailOptions, (emailErr, info) => {
+            if (emailErr) {
+                console.error("❌ Email Error:", emailErr);
+                // We STILL return success because the appointment was created
+                return res.status(201).json({
+                    message: "Appointment created (Email failed)",
+                    id: result.insertId
+                });
+            }
+
+            console.log("📧 Email Sent:", info.response);
+            return res.status(201).json({
+                message: "Appointment created and email sent",
+                id: result.insertId
+            });
+        });
+    }
+);
+
             }
         );
     });
@@ -370,6 +402,51 @@ app.get("/", (_, res) => {
         message: "Healthcare System API Running ✅",
         version: "3.0 Optimized",
     });
+});
+// Get all patients
+app.get("/api/patients", (req, res) => {
+    db.query("SELECT * FROM patients ORDER BY name", (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+// Get single appointment by ID
+app.get("/api/appointments/:id", (req, res) => {
+    db.query(
+        `SELECT a.*, d.name AS doctor_name
+         FROM appointments a
+         LEFT JOIN doctors d ON a.doctor_id = d.id
+         WHERE a.id = ?
+         LIMIT 1`,
+        [req.params.id],
+        (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            if (!rows.length) return res.status(404).json({ error: "Appointment not found" });
+            res.json(rows[0]);
+        }
+    );
+});
+// Update appointment status only
+app.put("/api/appointments/:id", (req, res) => {
+    const { status } = req.body;
+
+    if (!status) {
+        return res.status(400).json({ error: "Status is required" });
+    }
+
+    db.query(
+        `UPDATE appointments SET status = ? WHERE id = ?`,
+        [status, req.params.id],
+        (err, result) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: "Appointment not found" });
+            }
+
+            res.json({ message: "Appointment updated successfully" });
+        }
+    );
 });
 
 /************************************************************
