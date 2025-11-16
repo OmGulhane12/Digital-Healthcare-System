@@ -506,6 +506,12 @@
                 <p>Browse through our team of qualified doctors and their specializations.</p>
                 <button class="btn" onclick="showModal('doctorsModal')">View Doctors</button>
             </div>
+            <div class="card">
+    <h3>My Medical Records</h3>
+    <p>View your diagnosis, prescriptions & past visits.</p>
+    <button class="btn" onclick="showSection('recordsSection')">View Records</button>
+</div>
+
         </div>
 
         <!-- Appointments Section -->
@@ -540,26 +546,38 @@
             </div>
             <div id="bookAlert"></div>
             <form id="bookAppointmentForm">
-                <div class="form-group">
-                    <label>Select Doctor *</label>
-                    <select name="doctor_id" id="doctorSelect" required>
-                        <option value="">Loading doctors...</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Appointment Date *</label>
-                    <input type="date" name="appointment_date" id="appointmentDate" required>
-                </div>
-                <div class="form-group">
-                    <label>Appointment Time *</label>
-                    <input type="time" name="appointment_time" required>
-                </div>
-                <div class="form-group">
-                    <label>Reason for Visit *</label>
-                    <textarea name="reason" placeholder="Please describe your symptoms or reason for visit..." required></textarea>
-                </div>
-                <button type="submit" class="btn" style="width: 100%;">Book Appointment</button>
-            </form>
+    <div class="form-group">
+        <label>Select Doctor *</label>
+        <select name="doctor_id" id="doctorSelect" required>
+            <option value="">Loading doctors...</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Patient Email</label>
+        <input type="email" name="patient_email" required>
+    </div>
+
+    <div class="form-group">
+        <label>Appointment Date *</label>
+        <input type="date" name="appointment_date" id="appointmentDate" required>
+    </div>
+
+    <div class="form-group">
+        <label>Select Time Slot *</label>
+        <select name="appointment_time" id="timeSlots" required>
+            <option value="">Select Time Slot</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Reason for Visit *</label>
+        <textarea name="reason" placeholder="Please describe your symptoms or reason for visit..." required></textarea>
+    </div>
+
+    <button type="submit" class="btn" style="width: 100%;">Book Appointment</button>
+</form>
+
         </div>
     </div>
 
@@ -585,7 +603,29 @@
                 </tbody>
             </table>
         </div>
+      </div>
+<div id="recordsSection" class="section">
+    <h2>My Medical Records</h2>
+
+    <div id="recordsLoader" class="loading">Loading records...</div>
+    <div id="recordsEmpty" class="empty-state" style="display:none;">
+        <h3>No records found</h3>
+        <p>You have no past diagnosis or prescriptions.</p>
     </div>
+
+    <table id="recordsTable" style="display:none;">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Doctor</th>
+                <th>Diagnosis</th>
+                <th>Prescription</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody id="recordsBody"></tbody>
+    </table>
+</div>
 
     <script>
         const API_URL = 'http://localhost:3000/api';
@@ -828,6 +868,126 @@
                 if (alert) alert.classList.remove('show');
             }, 5000);
         }
+        function generateTimeSlots() {
+    const select = document.getElementById("timeSlots");
+    select.innerHTML = '<option value="">Select Time Slot</option>';
+
+    let start = 9 * 60;  // 09:00
+    let end = 17 * 60;   // 17:00
+
+    for (let mins = start; mins <= end; mins += 30) {
+        let hour = Math.floor(mins / 60);
+        let min = mins % 60;
+
+        let h = hour < 10 ? "0" + hour : hour;
+        let m = min < 10 ? "0" + min : min;
+
+        let time = `${h}:${m}`;
+
+        select.innerHTML += `<option value="${time}">${time}</option>`;
+    }
+}
+document.querySelector("select[name='doctor_id']").addEventListener("change", loadBookedSlots);
+document.querySelector("input[name='appointment_date']").addEventListener("change", loadBookedSlots);
+async function loadBookedSlots() {
+    const doctor_id = document.querySelector("select[name='doctor_id']").value;
+    const appointment_date = document.querySelector("input[name='appointment_date']").value;
+
+    if (!doctor_id || !appointment_date) return;
+
+    // ✅ Fetch booked slots
+    const response = await fetch(
+        `${API_URL}/appointments/slots?doctor_id=${doctor_id}&appointment_date=${appointment_date}`
+    );
+    const bookedSlots = await response.json();
+
+    // ✅ Regenerate slots
+    generateTimeSlots();
+
+    // ✅ Disable booked ones
+    disableBookedSlots(bookedSlots);
+}
+function disableBookedSlots(bookedSlots) {
+    const select = document.getElementById("timeSlots");
+
+    [...select.options].forEach(option => {
+        if (bookedSlots.includes(option.value)) {
+            option.disabled = true;
+            option.style.color = "red";
+            option.textContent = `${option.value} (Booked)`;
+        }
+    });
+}
+async function loadMedicalRecords() {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    // 1️⃣ Get patient row by email
+    const patientRes = await fetch(`${API_URL}/patients/by-email/${user.email}`);
+    const patient = await patientRes.json();
+
+    if (!patient || !patient.id) {
+        document.getElementById("recordsLoader").style.display = "none";
+        document.getElementById("recordsEmpty").style.display = "block";
+        return;
+    }
+
+    const patientId = patient.id;
+
+    // 2️⃣ Fetch medical records
+    const recordsRes = await fetch(`${API_URL}/medical-records/patient/${patientId}`);
+    const data = await recordsRes.json();
+
+    // Hide loader
+    document.getElementById("recordsLoader").style.display = "none";
+
+    // 3️⃣ If no data
+    if (!Array.isArray(data) || data.length === 0) {
+        document.getElementById("recordsEmpty").style.display = "block";
+        return;
+    }
+
+    // 4️⃣ Show table
+    document.getElementById("recordsTable").style.display = "table";
+
+    // 5️⃣ Fill table rows
+    let rows = "";
+    data.forEach(r => {
+        rows += `
+            <tr>
+                <td>${r.visit_date || "-"}</td>
+                <td>${r.doctor_name ? r.doctor_name + " (" + r.specialization + ")" : "-"}</td>
+                <td>${r.diagnosis || "-"}</td>
+                <td>${r.prescription || "-"}</td>
+                <td>${r.notes || "-"}</td>
+            </tr>
+        `;
+    });
+
+    document.getElementById("recordsBody").innerHTML = rows;
+}
+
+
+function showSection(sectionId) {
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(sec => sec.classList.remove('show'));
+
+    // Reset record UI visibility properly
+    if (sectionId === "recordsSection") {
+        document.getElementById("recordsLoader").style.display = "block";
+        document.getElementById("recordsEmpty").style.display = "none";
+        document.getElementById("recordsTable").style.display = "none";
+    }
+
+    // Show section
+    document.getElementById(sectionId).classList.add('show');
+
+    // Load records once visible
+    if (sectionId === "recordsSection") {
+        loadMedicalRecords();
+    }
+}
+
+
     </script>
 </body>
 </html>

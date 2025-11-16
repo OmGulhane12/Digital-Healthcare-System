@@ -1,480 +1,380 @@
-const express = require('express');
-const mysql = require('mysql2');
-const cors = require('cors');
-const bodyParser = require('body-parser');
+/************************************************************
+ * DIGITAL HEALTHCARE SYSTEM - OPTIMIZED SERVER.JS
+ ************************************************************/
+
+require("dotenv").config();
+const express = require("express");
+const mysql = require("mysql2");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const nodemailer = require("nodemailer");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// MySQL Database Connection
+/************************************************************
+ * MYSQL DATABASE CONNECTION
+ ************************************************************/
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '@Omrock9860', // Change this to your MySQL password
-    database: 'healthcare_system'
+    host: process.env.DB_HOST || "localhost",
+    user: process.env.DB_USER || "root",
+    password: process.env.DB_PASS || "",
+    database: process.env.DB_NAME || "healthcare_system",
 });
 
 db.connect((err) => {
     if (err) {
-        console.error('Error connecting to database:', err);
-        return;
+        console.error("❌ MySQL Connection Failed:", err);
+        process.exit(1);
     }
-    console.log('Connected to MySQL database');
+    console.log("✅ Connected to MySQL Database");
 });
 
-// ==================== AUTHENTICATION ROUTES ====================
+/************************************************************
+ * EMAIL TRANSPORTER
+ ************************************************************/
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,
+    },
+});
 
-// Register new user
-app.post('/api/auth/register', (req, res) => {
+/************************************************************
+ * TIME SLOT SYSTEM
+ ************************************************************/
+const SLOT_MINUTES = 30;
+const START_MIN = 9 * 60;
+const END_MIN = 17 * 60;
+
+function generateSlots() {
+    let arr = [];
+    for (let t = START_MIN; t <= END_MIN - SLOT_MINUTES; t += SLOT_MINUTES) {
+        let hh = String(Math.floor(t / 60)).padStart(2, "0");
+        let mm = String(t % 60).padStart(2, "0");
+        arr.push(`${hh}:${mm}`);
+    }
+    return arr;
+}
+
+function toMySQLTime(t) {
+    if (!t) return null;
+    return t.length === 5 ? `${t}:00` : t;
+}
+
+/************************************************************
+ * GET OR CREATE PATIENT BY EMAIL
+ ************************************************************/
+function resolvePatientId({ patient_id, patient_email, patient_name }, callback) {
+    if (patient_id) return callback(null, patient_id);
+
+    if (!patient_email) return callback(new Error("patient_email required"));
+
+    db.query(
+        "SELECT id FROM patients WHERE email = ? LIMIT 1",
+        [patient_email],
+        (err, rows) => {
+            if (err) return callback(err);
+
+            if (rows.length) return callback(null, rows[0].id);
+
+            // Create minimal patient record
+            db.query(
+                `INSERT INTO patients (name, email, phone, dob, gender, address)
+                 VALUES (?, ?, '', '2000-01-01', 'Other', 'Not Provided')`,
+                [patient_name || "Unknown", patient_email],
+                (err2, result) => {
+                    if (err2) return callback(err2);
+                    callback(null, result.insertId);
+                }
+            );
+        }
+    );
+}
+
+/************************************************************
+ * AUTH ROUTES
+ ************************************************************/
+
+// Register
+app.post("/api/auth/register", (req, res) => {
     const { name, email, password, phone, role } = req.body;
-    
-    // Validate role
-    if (role === 'admin') {
-        return res.status(403).json({ error: 'Cannot register as admin' });
-    }
-    
-    // Check if user already exists
-    const checkQuery = 'SELECT * FROM users WHERE email = ?';
-    db.query(checkQuery, [email], (err, results) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
-        
-        if (results.length > 0) {
-            return res.status(400).json({ error: 'User already exists with this email' });
-        }
-        
-        // Insert new user
-        const insertQuery = 'INSERT INTO users (name, email, password, phone, role) VALUES (?, ?, ?, ?, ?)';
-        db.query(insertQuery, [name, email, password, phone, role], (err, result) => {
-            if (err) {
-                return res.status(500).json({ error: err.message });
+
+    if (role === "admin")
+        return res.status(403).json({ error: "Cannot register as admin" });
+
+    db.query("SELECT id FROM users WHERE email = ?", [email], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        if (rows.length)
+            return res.status(400).json({ error: "User already exists" });
+
+        db.query(
+            `INSERT INTO users (name, email, password, phone, role)
+             VALUES (?, ?, ?, ?, ?)`,
+            [name, email, password, phone, role],
+            (err2, result) => {
+                if (err2) return res.status(500).json({ error: err2.message });
+
+                // Auto-create doctor/patient profile
+                if (role === "doctor") {
+                    db.query(
+                        `INSERT INTO doctors (name, specialization, email, phone, experience)
+                         VALUES (?, 'General Medicine', ?, ?, 0)`,
+                        [name, email, phone]
+                    );
+                }
+
+                if (role === "patient") {
+                    db.query(
+                        `INSERT INTO patients (name, email, phone, dob, gender, address)
+                         VALUES (?, ?, ?, '2000-01-01', 'Other', 'Not Provided')`,
+                        [name, email, phone]
+                    );
+                }
+
+                res.status(201).json({ message: "Registered", id: result.insertId });
             }
-            
-            // If doctor, add to doctors table
-            if (role === 'doctor') {
-                const doctorQuery = 'INSERT INTO doctors (name, specialization, email, phone, experience) VALUES (?, ?, ?, ?, ?)';
-                db.query(doctorQuery, [name, 'General Medicine', email, phone, 0], (err) => {
-                    if (err) console.error('Error adding doctor:', err);
-                });
-            }
-            
-            // If patient, add to patients table
-            if (role === 'patient') {
-                const patientQuery = 'INSERT INTO patients (name, email, phone, dob, gender, address) VALUES (?, ?, ?, ?, ?, ?)';
-                db.query(patientQuery, [name, email, phone, '2000-01-01', 'Other', 'Address not provided'], (err) => {
-                    if (err) console.error('Error adding patient:', err);
-                });
-            }
-            
-            res.status(201).json({ 
-                message: 'Registration successful',
-                userId: result.insertId 
-            });
-        });
+        );
     });
 });
 
-// Login user
-app.post('/api/auth/login', (req, res) => {
+// Login
+app.post("/api/auth/login", (req, res) => {
     const { email, password, role } = req.body;
-    
-    const query = 'SELECT * FROM users WHERE email = ? AND password = ? AND role = ? AND is_active = TRUE';
-    db.query(query, [email, password, role], (err, results) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
+
+    db.query(
+        `SELECT * FROM users
+         WHERE email=? AND password=? AND role=? AND is_active=TRUE`,
+        [email, password, role],
+        (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            if (!rows.length)
+                return res.status(401).json({ error: "Invalid credentials" });
+
+            let user = rows[0];
+            delete user.password;
+            res.json({ message: "Login successful", user });
         }
-        
-        if (results.length === 0) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+    );
+});
+
+// Get profile
+app.get("/api/auth/profile/:email", (req, res) => {
+    db.query(
+        `SELECT id, name, email, phone, role, created_at
+         FROM users WHERE email=?`,
+        [req.params.email],
+        (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            if (!rows.length)
+                return res.status(404).json({ error: "User not found" });
+            res.json(rows[0]);
         }
-        
-        const user = results[0];
-        
-        // Remove password from response
-        delete user.password;
-        
-        res.json({ 
-            message: 'Login successful',
-            user: user
-        });
+    );
+});
+
+/************************************************************
+ * DOCTORS ROUTES
+ ************************************************************/
+app.get("/api/doctors", (_, res) => {
+    db.query("SELECT * FROM doctors ORDER BY name", (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
     });
 });
 
-// Get user profile
-app.get('/api/auth/profile/:email', (req, res) => {
-    const query = 'SELECT id, name, email, phone, role, created_at FROM users WHERE email = ?';
-    db.query(query, [req.params.email], (err, results) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
+/************************************************************
+ * PATIENT ROUTES
+ ************************************************************/
+
+app.get("/api/patients/by-email/:email", (req, res) => {
+    db.query(
+        "SELECT * FROM patients WHERE email = ? LIMIT 1",
+        [req.params.email],
+        (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(rows[0] || {});
         }
-        
-        if (results.length === 0) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-        
-        res.json(results[0]);
-    });
+    );
 });
 
-// Update user password
-app.put('/api/auth/change-password', (req, res) => {
-    const { email, oldPassword, newPassword } = req.body;
-    
-    // Verify old password
-    const checkQuery = 'SELECT * FROM users WHERE email = ? AND password = ?';
-    db.query(checkQuery, [email, oldPassword], (err, results) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
-        
-        if (results.length === 0) {
-            return res.status(401).json({ error: 'Current password is incorrect' });
-        }
-        
-        // Update password
-        const updateQuery = 'UPDATE users SET password = ? WHERE email = ?';
-        db.query(updateQuery, [newPassword, email], (err) => {
-            if (err) {
-                return res.status(500).json({ error: err.message });
-            }
-            
-            res.json({ message: 'Password changed successfully' });
-        });
-    });
-});
+/************************************************************
+ * APPOINTMENTS ROUTES
+ ************************************************************/
 
-// Get all users (admin only)
-app.get('/api/users', (req, res) => {
-    const query = 'SELECT id, name, email, phone, role, is_active, created_at FROM users ORDER BY created_at DESC';
-    db.query(query, (err, results) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
-        res.json(results);
-    });
-});
-
-// ==================== DOCTORS ROUTES ====================
-
-// Get all doctors
-app.get('/api/doctors', (req, res) => {
-    const query = 'SELECT * FROM doctors ORDER BY name';
-    db.query(query, (err, results) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        res.json(results);
-    });
-});
-
-// Get single doctor
-app.get('/api/doctors/:id', (req, res) => {
-    const query = 'SELECT * FROM doctors WHERE id = ?';
-    db.query(query, [req.params.id], (err, results) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        if (results.length === 0) {
-            res.status(404).json({ error: 'Doctor not found' });
-            return;
-        }
-        res.json(results[0]);
-    });
-});
-
-// Add new doctor
-app.post('/api/doctors', (req, res) => {
-    const { name, specialization, email, phone, experience } = req.body;
-    const query = 'INSERT INTO doctors (name, specialization, email, phone, experience) VALUES (?, ?, ?, ?, ?)';
-    
-    db.query(query, [name, specialization, email, phone, experience], (err, result) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        res.status(201).json({ 
-            message: 'Doctor added successfully', 
-            id: result.insertId 
-        });
-    });
-});
-
-// Update doctor
-app.put('/api/doctors/:id', (req, res) => {
-    const { name, specialization, email, phone, experience } = req.body;
-    const query = 'UPDATE doctors SET name = ?, specialization = ?, email = ?, phone = ?, experience = ? WHERE id = ?';
-    
-    db.query(query, [name, specialization, email, phone, experience, req.params.id], (err, result) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        if (result.affectedRows === 0) {
-            res.status(404).json({ error: 'Doctor not found' });
-            return;
-        }
-        res.json({ message: 'Doctor updated successfully' });
-    });
-});
-
-// Delete doctor
-app.delete('/api/doctors/:id', (req, res) => {
-    const query = 'DELETE FROM doctors WHERE id = ?';
-    db.query(query, [req.params.id], (err, result) => {
-        if (err) {
-            
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        if (result.affectedRows === 0) {
-            res.status(404).json({ error: 'Doctor not found' });
-            return;
-        }
-        res.json({ message: 'Doctor deleted successfully' });
-    });
-});
-
-// ==================== PATIENTS ROUTES ====================
-
-// Get all patients
-app.get('/api/patients', (req, res) => {
-    const query = 'SELECT * FROM patients ORDER BY name';
-    db.query(query, (err, results) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        res.json(results);
-    });
-});
-
-// Get single patient
-app.get('/api/patients/:id', (req, res) => {
-    const query = 'SELECT * FROM patients WHERE id = ?';
-    db.query(query, [req.params.id], (err, results) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        if (results.length === 0) {
-            res.status(404).json({ error: 'Patient not found' });
-            return;
-        }
-        res.json(results[0]);
-    });
-});
-
-// Add new patient
-app.post('/api/patients', (req, res) => {
-    const { name, email, phone, dob, gender, address } = req.body;
-    const query = 'INSERT INTO patients (name, email, phone, dob, gender, address) VALUES (?, ?, ?, ?, ?, ?)';
-    
-    db.query(query, [name, email, phone, dob, gender, address], (err, result) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        res.status(201).json({ 
-            message: 'Patient registered successfully', 
-            id: result.insertId 
-        });
-    });
-});
-
-// Update patient
-app.put('/api/patients/:id', (req, res) => {
-    const { name, email, phone, dob, gender, address } = req.body;
-    const query = 'UPDATE patients SET name = ?, email = ?, phone = ?, dob = ?, gender = ?, address = ? WHERE id = ?';
-    
-    db.query(query, [name, email, phone, dob, gender, address, req.params.id], (err, result) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        if (result.affectedRows === 0) {
-            res.status(404).json({ error: 'Patient not found' });
-            return;
-        }
-        res.json({ message: 'Patient updated successfully' });
-    });
-});
-
-// Delete patient
-app.delete('/api/patients/:id', (req, res) => {
-    const query = 'DELETE FROM patients WHERE id = ?';
-    db.query(query, [req.params.id], (err, result) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        if (result.affectedRows === 0) {
-            res.status(404).json({ error: 'Patient not found' });
-            return;
-        }
-        res.json({ message: 'Patient deleted successfully' });
-    });
-});
-
-// ==================== APPOINTMENTS ROUTES ====================
-
-// Get all appointments with doctor names
-app.get('/api/appointments', (req, res) => {
-    const query = `
-        SELECT a.*, d.name as doctor_name 
-        FROM appointments a 
+// Get all appointments
+app.get("/api/appointments", (req, res) => {
+    const q = `
+        SELECT a.*, d.name AS doctor_name
+        FROM appointments a
         LEFT JOIN doctors d ON a.doctor_id = d.id
         ORDER BY a.appointment_date DESC, a.appointment_time DESC
     `;
-    db.query(query, (err, results) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        res.json(results);
+    db.query(q, (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
     });
 });
 
-// Get single appointment
-app.get('/api/appointments/:id', (req, res) => {
-    const query = `
-        SELECT a.*, d.name as doctor_name 
-        FROM appointments a 
-        LEFT JOIN doctors d ON a.doctor_id = d.id
-        WHERE a.id = ?
-    `;
-    db.query(query, [req.params.id], (err, results) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
+// Get booked slots
+app.get("/api/appointments/slots", (req, res) => {
+    const { doctor_id, date } = req.query;
+
+    if (!doctor_id || !date)
+        return res.status(400).json({ error: "doctor_id and date required" });
+
+    db.query(
+        `SELECT TIME_FORMAT(appointment_time, "%H:%i") AS time
+         FROM appointments WHERE doctor_id=? AND appointment_date=?`,
+        [doctor_id, date],
+        (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            const taken = rows.map((r) => r.time);
+            const allSlots = generateSlots();
+            res.json({
+                all_slots: allSlots,
+                taken_slots: taken,
+                available_slots: allSlots.filter((t) => !taken.includes(t)),
+            });
         }
-        if (results.length === 0) {
-            res.status(404).json({ error: 'Appointment not found' });
-            return;
-        }
-        res.json(results[0]);
-    });
+    );
 });
 
-// Create new appointment
-app.post('/api/appointments', (req, res) => {
-    const { patient_name, doctor_id, appointment_date, appointment_time, reason } = req.body;
-    const query = `
-        INSERT INTO appointments (patient_name, doctor_id, appointment_date, appointment_time, reason, status) 
-        VALUES (?, ?, ?, ?, ?, 'Scheduled')
-    `;
-    
-    db.query(query, [patient_name, doctor_id, appointment_date, appointment_time, reason], (err, result) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        res.status(201).json({ 
-            message: 'Appointment booked successfully', 
-            id: result.insertId 
-        });
-    });
-});
+// Create appointment
+app.post("/api/appointments", (req, res) => {
+    const {
+        patient_name,
+        patient_email,
+        doctor_id,
+        appointment_date,
+        appointment_time,
+        reason,
+    } = req.body;
 
-// Update appointment
-app.put('/api/appointments/:id', (req, res) => {
-    const { patient_name, doctor_id, appointment_date, appointment_time, reason, status } = req.body;
-    const query = `
-        UPDATE appointments 
-        SET patient_name = ?, doctor_id = ?, appointment_date = ?, 
-            appointment_time = ?, reason = ?, status = ? 
-        WHERE id = ?
-    `;
-    
-    db.query(query, [patient_name, doctor_id, appointment_date, appointment_time, reason, status, req.params.id], (err, result) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        if (result.affectedRows === 0) {
-            res.status(404).json({ error: 'Appointment not found' });
-            return;
-        }
-        res.json({ message: 'Appointment updated successfully' });
-    });
-});
+    if (!patient_email || !doctor_id || !appointment_date || !appointment_time)
+        return res.status(400).json({ error: "Missing fields" });
 
-// Delete appointment
-app.delete('/api/appointments/:id', (req, res) => {
-    const query = 'DELETE FROM appointments WHERE id = ?';
-    db.query(query, [req.params.id], (err, result) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
-        }
-        if (result.affectedRows === 0) {
-            res.status(404).json({ error: 'Appointment not found' });
-            return;
-        }
-        res.json({ message: 'Appointment deleted successfully' });
-    });
-});
+    const normalized = appointment_time.substring(0, 5);
+    if (!generateSlots().includes(normalized))
+        return res.status(400).json({ error: "Invalid time slot" });
 
-// ==================== STATISTICS ROUTES ====================
+    resolvePatientId({ patient_email, patient_name }, (err, patientId) => {
+        if (err) return res.status(500).json({ error: err.message });
 
-// Get dashboard statistics
-app.get('/api/statistics', (req, res) => {
-    const queries = {
-        totalDoctors: 'SELECT COUNT(*) as count FROM doctors',
-        totalPatients: 'SELECT COUNT(*) as count FROM patients',
-        totalAppointments: 'SELECT COUNT(*) as count FROM appointments',
-        todayAppointments: 'SELECT COUNT(*) as count FROM appointments WHERE appointment_date = CURDATE()',
-        totalUsers: 'SELECT COUNT(*) as count FROM users'
-    };
+        // Validate availability
+        db.query(
+            `SELECT id FROM appointments
+             WHERE doctor_id=? AND appointment_date=? AND appointment_time=?`,
+            [doctor_id, appointment_date, toMySQLTime(normalized)],
+            (err2, rows) => {
+                if (err2) return res.status(500).json({ error: err2.message });
 
-    const stats = {};
-    let completed = 0;
+                if (rows.length)
+                    return res.status(409).json({ error: "Slot already booked" });
 
-    Object.keys(queries).forEach(key => {
-        db.query(queries[key], (err, results) => {
-            if (!err) {
-                stats[key] = results[0].count;
+                // Insert
+                db.query(
+                    `INSERT INTO appointments
+                     (patient_id, patient_name, patient_email, doctor_id,
+                      appointment_date, appointment_time, reason, status)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, 'Scheduled')`,
+                    [
+                        patientId,
+                        patient_name,
+                        patient_email,
+                        doctor_id,
+                        appointment_date,
+                        toMySQLTime(normalized),
+                        reason,
+                    ],
+                    (err3, result) => {
+                        if (err3)
+                            return res.status(500).json({ error: err3.message });
+                        res.status(201).json({
+                            message: "Appointment created",
+                            id: result.insertId,
+                        });
+                    }
+                );
             }
-            completed++;
-            if (completed === Object.keys(queries).length) {
-                res.json(stats);
-            }
-        });
+        );
     });
 });
 
-// Root route
-app.get('/', (req, res) => {
-    res.json({ 
-        message: 'Digital Healthcare System API',
-        version: '2.0.0',
-        endpoints: {
-            auth: {
-                register: 'POST /api/auth/register',
-                login: 'POST /api/auth/login',
-                profile: 'GET /api/auth/profile/:email',
-                changePassword: 'PUT /api/auth/change-password'
-            },
-            doctors: '/api/doctors',
-            patients: '/api/patients',
-            appointments: '/api/appointments',
-            statistics: '/api/statistics',
-            users: '/api/users'
+/************************************************************
+ * MEDICAL RECORDS
+ ************************************************************/
+
+// Get all records
+app.get("/api/medical-records", (req, res) => {
+    const q = `
+        SELECT mr.*, d.name AS doctor_name, d.specialization, p.name AS patient_name
+        FROM medical_records mr
+        LEFT JOIN doctors d ON mr.doctor_id = d.id
+        LEFT JOIN patients p ON mr.patient_id = p.id
+        ORDER BY mr.visit_date DESC
+    `;
+    db.query(q, (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+// Get by patient ID
+app.get("/api/medical-records/patient/:id", (req, res) => {
+    db.query(
+        `SELECT mr.*, d.name AS doctor_name, d.specialization
+         FROM medical_records mr
+         LEFT JOIN doctors d ON mr.doctor_id = d.id
+         WHERE mr.patient_id=?
+         ORDER BY mr.visit_date DESC`,
+        [req.params.id],
+        (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(rows);
         }
+    );
+});
+
+// Add record
+app.post("/api/medical-records", (req, res) => {
+    const { patient_id, doctor_id, diagnosis, prescription, notes, visit_date } =
+        req.body;
+
+    if (!patient_id || !doctor_id || !diagnosis || !visit_date)
+        return res.status(400).json({ error: "Missing fields" });
+
+    db.query(
+        `INSERT INTO medical_records (patient_id, doctor_id, diagnosis, prescription, notes, visit_date)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [patient_id, doctor_id, diagnosis, prescription || "", notes || "", visit_date],
+        (err, result) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.status(201).json({ message: "Record added", id: result.insertId });
+        }
+    );
+});
+
+/************************************************************
+ * ROOT TESTING ENDPOINT
+ ************************************************************/
+app.get("/", (_, res) => {
+    res.json({
+        message: "Healthcare System API Running ✅",
+        version: "3.0 Optimized",
     });
 });
 
-// Start server
+/************************************************************
+ * START SERVER
+ ************************************************************/
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-    console.log('Default admin credentials:');
-    console.log('Email: admin@healthcare.com');
-    console.log('Password: admin123');
+    console.log(`🚀 Server running at http://localhost:${PORT}`);
 });

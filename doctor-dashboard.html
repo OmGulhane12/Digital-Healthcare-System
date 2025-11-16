@@ -1,663 +1,561 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Dashboard</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f7fa;
-        }
-
-        header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 1rem 0;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .btn-logout {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            padding: 0.5rem 1.5rem;
-            border: 1px solid white;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .btn-logout:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
-
-        .welcome-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
-        }
-
-        .welcome-card h1 {
-            color: #333;
-            margin-bottom: 0.5rem;
-        }
-
-        .welcome-card p {
-            color: #666;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            text-align: center;
-            border-left: 4px solid #667eea;
-        }
-
-        .stat-card h4 {
-            font-size: 2.5rem;
-            color: #667eea;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-card p {
-            color: #666;
-            font-size: 1rem;
-        }
-
-        .section {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
-        }
-
-        .section h2 {
-            color: #667eea;
-            margin-bottom: 1.5rem;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-
-        th, td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-
-        th {
-            background: #667eea;
-            color: white;
-        }
-
-        tr:hover {
-            background: #f5f5f5;
-        }
-
-        .status {
-            padding: 0.25rem 0.75rem;
-            border-radius: 15px;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-
-        .status.scheduled {
-            background: #e3f2fd;
-            color: #1976d2;
-        }
-
-        .status.completed {
-            background: #e8f5e9;
-            color: #388e3c;
-        }
-
-        .status.cancelled {
-            background: #ffebee;
-            color: #d32f2f;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: opacity 0.3s;
-        }
-
-        .btn:hover {
-            opacity: 0.9;
-        }
-
-        .btn-small {
-            padding: 0.4rem 0.8rem;
-            font-size: 0.85rem;
-            margin: 0 0.25rem;
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
-        }
-
-        .tabs {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            border-bottom: 2px solid #eee;
-        }
-
-        .tab {
-            padding: 1rem 2rem;
-            cursor: pointer;
-            border: none;
-            background: none;
-            font-size: 1rem;
-            color: #666;
-            transition: all 0.3s;
-            border-bottom: 3px solid transparent;
-        }
-
-        .tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .alert {
-            padding: 1rem;
-            border-radius: 5px;
-            margin-bottom: 1rem;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: #999;
-        }
-
-        .empty-state h3 {
-            margin-bottom: 0.5rem;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 0.5rem;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Doctor Dashboard — With Medical Records</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f5f7fa}
+    header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;padding:1rem 0;box-shadow:0 2px 5px rgba(0,0,0,.1)}
+    nav{display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto;padding:0 2rem}
+    .logo{font-size:1.5rem;font-weight:700}
+    .user-info{display:flex;align-items:center;gap:1rem}
+    .btn-logout{background:rgba(255,255,255,.2);color:#fff;padding:.5rem 1.5rem;border:1px solid #fff;border-radius:5px;cursor:pointer;transition:background .3s}
+    .btn-logout:hover{background:rgba(255,255,255,.3)}
+    .container{max-width:1200px;margin:2rem auto;padding:0 2rem}
+    .welcome-card{background:#fff;padding:2rem;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.1);margin-bottom:2rem}
+    .welcome-card h1{color:#333;margin-bottom:.5rem}
+    .welcome-card p{color:#666}
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin-bottom:2rem}
+    .stat-card{background:#fff;padding:1.5rem;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.1);text-align:center;border-left:4px solid #667eea}
+    .stat-card h4{font-size:2.5rem;color:#667eea;margin-bottom:.5rem}
+    .stat-card p{color:#666;font-size:1rem}
+    .section{background:#fff;padding:2rem;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.1);margin-bottom:2rem}
+    .section h2{color:#667eea;margin-bottom:1.5rem}
+    table{width:100%;border-collapse:collapse;margin-top:1rem;background:#fff;border-radius:10px;overflow:hidden}
+    th,td{padding:1rem;text-align:left;border-bottom:1px solid #eee}
+    th{background:#667eea;color:#fff}
+    tr:hover{background:#f5f5f5}
+    .status{padding:.25rem .75rem;border-radius:15px;font-size:.85rem;font-weight:500}
+    .status.scheduled{background:#e3f2fd;color:#1976d2}
+    .status.completed{background:#e8f5e9;color:#388e3c}
+    .status.cancelled{background:#ffebee;color:#d32f2f}
+    .btn{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;padding:.5rem 1rem;border:none;border-radius:5px;cursor:pointer;font-size:.9rem;transition:opacity .3s}
+    .btn:hover{opacity:.9}
+    .btn-small{padding:.4rem .8rem;font-size:.85rem;margin:0 .25rem}
+    .btn-success{background:linear-gradient(135deg,#4caf50 0%,#45a049 100%)}
+    .btn-danger{background:linear-gradient(135deg,#f44336 0%,#d32f2f 100%)}
+    .tabs{display:flex;gap:1rem;margin-bottom:2rem;border-bottom:2px solid #eee}
+    .tab{padding:1rem 2rem;cursor:pointer;border:none;background:none;font-size:1rem;color:#666;transition:all .3s;border-bottom:3px solid transparent}
+    .tab.active{color:#667eea;border-bottom-color:#667eea}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+    .alert{padding:1rem;border-radius:5px;margin-bottom:1rem}
+    .alert-success{background:#d4edda;color:#155724;border:1px solid #c3e6cb}
+    .alert-error{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb}
+    .empty-state{text-align:center;padding:3rem;color:#999}
+    .empty-state h3{margin-bottom:.5rem}
+    .action-buttons{display:flex;gap:.5rem}
+    .modal{display:none;position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:2000}
+    .modal.show{display:flex}
+    .modal-card{background:#fff;padding:1.5rem;border-radius:12px;max-width:720px;width:95%;box-shadow:0 8px 30px rgba(0,0,0,.25);max-height:90vh;overflow:auto}
+    .modal-card h3{color:#667eea;margin-bottom:1rem}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    .form-group{margin-bottom:1rem}
+    label{display:block;margin-bottom:.4rem;color:#444;font-weight:600}
+    input[type='text'],textarea,select{width:100%;padding:.6rem;border:1px solid #e0e0e0;border-radius:8px}
+    textarea{min-height:120px}
+    .modal-actions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1rem}
+    @media (max-width:600px){.form-row{grid-template-columns:1fr}}
+  </style>
 </head>
 <body>
-    <header>
-        <nav>
-            <div class="logo">🏥 Doctor Portal</div>
-            <div class="user-info">
-                <span id="userName">Loading...</span>
-                <button class="btn-logout" onclick="logout()">Logout</button>
-            </div>
-        </nav>
-    </header>
+  <header>
+    <nav>
+      <div class="logo">🏥 Doctor Portal</div>
+      <div class="user-info">
+        <span id="userName">Loading...</span>
+        <button class="btn-logout" onclick="logout()">Logout</button>
+      </div>
+    </nav>
+  </header>
 
-    <div class="container">
-        <div class="welcome-card">
-            <h1>Welcome, Dr. <span id="welcomeName">Doctor</span>!</h1>
-            <p>Manage your appointments and patients</p>
-        </div>
-
-        <div class="stats">
-            <div class="stat-card">
-                <h4 id="todayAppointments">0</h4>
-                <p>Today's Appointments</p>
-            </div>
-            <div class="stat-card">
-                <h4 id="totalAppointments">0</h4>
-                <p>Total Appointments</p>
-            </div>
-            <div class="stat-card">
-                <h4 id="completedAppointments">0</h4>
-                <p>Completed</p>
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="tabs">
-                <button class="tab active" onclick="showTab('today')">Today's Appointments</button>
-                <button class="tab" onclick="showTab('upcoming')">Upcoming</button>
-                <button class="tab" onclick="showTab('all')">All Appointments</button>
-                <button class="tab" onclick="showTab('patients')">My Patients</button>
-            </div>
-
-            <div id="alert-container"></div>
-
-            <!-- Today's Appointments -->
-            <div id="today" class="tab-content active">
-                <h3>Today's Schedule</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Time</th>
-                            <th>Patient</th>
-                            <th>Reason</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="todayBody">
-                        <tr>
-                            <td colspan="5">Loading...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Upcoming Appointments -->
-            <div id="upcoming" class="tab-content">
-                <h3>Upcoming Appointments</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Patient</th>
-                            <th>Reason</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="upcomingBody">
-                        <tr>
-                            <td colspan="6">Loading...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- All Appointments -->
-            <div id="all" class="tab-content">
-                <h3>All Appointments</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Patient</th>
-                            <th>Reason</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="allBody">
-                        <tr>
-                            <td colspan="6">Loading...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Patients -->
-            <div id="patients" class="tab-content">
-                <h3>Patient List</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Gender</th>
-                            <th>Appointments</th>
-                        </tr>
-                    </thead>
-                    <tbody id="patientsBody">
-                        <tr>
-                            <td colspan="5">Loading...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+  <div class="container">
+    <div class="welcome-card">
+      <h1>Welcome, Dr. <span id="welcomeName">Doctor</span>!</h1>
+      <p>Manage your appointments and patients</p>
     </div>
 
-    <script>
-        const API_URL = 'http://localhost:3000/api';
-        let currentUser = null;
-        let doctorId = null;
+    <div class="stats">
+      <div class="stat-card">
+        <h4 id="todayAppointments">0</h4>
+        <p>Today's Appointments</p>
+      </div>
+      <div class="stat-card">
+        <h4 id="totalAppointments">0</h4>
+        <p>Total Appointments</p>
+      </div>
+      <div class="stat-card">
+        <h4 id="completedAppointments">0</h4>
+        <p>Completed</p>
+      </div>
+    </div>
 
-        window.onload = async function() {
-            const userStr = localStorage.getItem('user');
-            if (!userStr) {
-                window.location.href = 'login.html';
-                return;
-            }
-            
-            currentUser = JSON.parse(userStr);
-            if (currentUser.role !== 'doctor') {
-                alert('Access denied. Doctor access only.');
-                window.location.href = 'login.html';
-                return;
-            }
-            
-            document.getElementById('userName').textContent = currentUser.name;
-            document.getElementById('welcomeName').textContent = currentUser.name;
-            
-            await findDoctorId();
-            loadDashboardStats();
+    <div class="section">
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('today', event)">Today's Appointments</button>
+        <button class="tab" onclick="showTab('upcoming', event)">Upcoming</button>
+        <button class="tab" onclick="showTab('all', event)">All Appointments</button>
+        <button class="tab" onclick="showTab('patients', event)">My Patients</button>
+        <button class="tab" onclick="showTab('records', event)">Medical Records</button>
+      </div>
+
+      <div id="alert-container"></div>
+
+      <!-- Today -->
+      <div id="today" class="tab-content active">
+        <h3>Today's Schedule</h3>
+        <table>
+          <thead>
+          <tr>
+            <th>Time</th>
+            <th>Patient</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody id="todayBody">
+          <tr><td colspan="5">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Upcoming -->
+      <div id="upcoming" class="tab-content">
+        <h3>Upcoming Appointments</h3>
+        <table>
+          <thead>
+          <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Patient</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody id="upcomingBody">
+          <tr><td colspan="6">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- All -->
+      <div id="all" class="tab-content">
+        <h3>All Appointments</h3>
+        <table>
+          <thead>
+          <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Patient</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody id="allBody">
+          <tr><td colspan="6">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Patients -->
+      <div id="patients" class="tab-content">
+        <h3>Patient List</h3>
+        <table>
+          <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Gender</th>
+            <th>Appointments</th>
+          </tr>
+          </thead>
+          <tbody id="patientsBody">
+          <tr><td colspan="5">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Medical Records -->
+      <div id="records" class="tab-content">
+        <h3>Medical Records</h3>
+        <div style="margin-bottom:1rem">
+          <button class="btn" onclick="openNewRecordModal()">+ Add New Record</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Patient</th>
+              <th>Diagnosis</th>
+              <th>Prescription</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="recordsBody">
+            <tr><td colspan="5">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Record Modal -->
+  <div id="recordModal" class="modal">
+    <div class="modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <h3 id="recordModalTitle">Add Medical Record</h3>
+        <button class="btn" onclick="closeRecordModal()">Close</button>
+      </div>
+
+      <form id="recordForm">
+        <input type="hidden" name="appointment_id" id="rec_appointment_id" />
+        <div class="form-row">
+          <div class="form-group">
+            <label>Patient Name</label>
+            <input type="text" id="rec_patient_name" name="patient_name" readonly />
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="text" id="rec_date" name="visit_date" readonly />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Diagnosis</label>
+          <input type="text" name="diagnosis" id="rec_diagnosis" required />
+        </div>
+
+        <div class="form-group">
+          <label>Prescription</label>
+          <textarea name="prescription" id="rec_prescription"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea name="notes" id="rec_notes"></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn" onclick="saveMedicalRecord(true)">Save & Complete Appointment</button>
+          <button type="button" class="btn" onclick="saveMedicalRecord(false)">Save Record (keep status)</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+const API_URL = 'http://localhost:3000/api';
+let currentUser = null;
+let doctorId = null;
+let pendingAppointmentToComplete = null;
+
+// Keep appointment_time as HH:MM (display) — function extracts earliest sensible HH:MM
+function extractHHMM(raw) {
+    if (!raw) return '';
+    const s = String(raw).trim();
+    // If in "HH:MM:SS" or "HH:MM"
+    const m = s.match(/(\d{2}:\d{2})/);
+    return m ? m[1] : s.substring(0,5);
+}
+
+window.onload = async function () {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return location.replace('login.html');
+
+    currentUser = JSON.parse(userStr);
+    if (currentUser.role !== 'doctor') {
+        alert('Access denied.');
+        return location.replace('login.html');
+    }
+
+    document.getElementById('userName').textContent = currentUser.name;
+    document.getElementById('welcomeName').textContent = currentUser.name;
+
+    await findDoctorId();
+    await loadDashboardStats();
+    await loadTodayAppointments();
+    await loadRecords();
+};
+
+function logout() { localStorage.removeItem('user'); location.replace('login.html'); }
+
+async function findDoctorId() {
+    try {
+        const res = await fetch(`${API_URL}/doctors`);
+        const doctors = await res.json();
+        const me = doctors.find(d => d.email === currentUser.email || d.name === currentUser.name);
+        if (me) doctorId = me.id;
+    } catch (err) { console.error('findDoctorId error', err); }
+}
+
+function showTab(tab, ev){
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+    if (ev && ev.currentTarget) ev.currentTarget.classList.add('active');
+
+    if(tab==='today') loadTodayAppointments();
+    if(tab==='upcoming') loadUpcomingAppointments();
+    if(tab==='all') loadAllAppointments();
+    if(tab==='patients') loadPatients();
+    if(tab==='records') loadRecords();
+}
+
+async function loadDashboardStats(){
+    try{
+        const res = await fetch(`${API_URL}/appointments`);
+        const apps = await res.json();
+        const normalized = apps.map(a=>({...a, appointment_time: extractHHMM(a.appointment_time)}));
+        const myApps = normalized.filter(a=>a.doctor_id === doctorId);
+        const today = new Date().toISOString().split('T')[0];
+        const todayApps = myApps.filter(a=>a.appointment_date === today);
+        const completed = myApps.filter(a=>a.status === 'Completed');
+        document.getElementById('todayAppointments').textContent = todayApps.length;
+        document.getElementById('totalAppointments').textContent = myApps.length;
+        document.getElementById('completedAppointments').textContent = completed.length;
+    }catch(err){console.error(err)}
+}
+
+async function loadTodayAppointments(){
+    try{
+        const res = await fetch(`${API_URL}/appointments`);
+        const apps = await res.json();
+        const normalized = apps.map(a=>({...a, appointment_time: extractHHMM(a.appointment_time)}));
+        const today = new Date().toISOString().split('T')[0];
+        const todayApps = normalized.filter(a=>a.doctor_id===doctorId && (a.appointment_date===today));
+        const tbody = document.getElementById('todayBody');
+        if(!todayApps.length){ tbody.innerHTML = `<tr><td colspan="5">No appointments today</td></tr>`; return; }
+        tbody.innerHTML = todayApps.map(a=>`
+            <tr>
+                <td>${a.appointment_time}</td>
+                <td>${a.patient_name}</td>
+                <td>${a.reason || '-'}</td>
+                <td><span class="status ${String(a.status).toLowerCase()}">${a.status}</span></td>
+                <td>
+                    ${a.status==='Scheduled'
+                    ? `
+                      <button class="btn btn-small btn-success" onclick="onCompleteClicked(${a.id})">Complete</button>
+                      <button class="btn btn-small btn-danger" onclick="updateStatus(${a.id}, 'Cancelled')">Cancel</button>
+                      `
+                    : '-'}
+                </td>
+            </tr>
+        `).join('');
+    }catch(err){console.error(err)}
+}
+
+async function loadUpcomingAppointments(){
+    try{
+        const res = await fetch(`${API_URL}/appointments`);
+        const apps = await res.json();
+        const normalized = apps.map(a=>({...a, appointment_time: extractHHMM(a.appointment_time)}));
+        const today = new Date().toISOString().split('T')[0];
+        const upcoming = normalized.filter(a=>a.doctor_id===doctorId && a.appointment_date>today && a.status==='Scheduled');
+        const tbody = document.getElementById('upcomingBody');
+        if(!upcoming.length){ tbody.innerHTML = `<tr><td colspan="6">No upcoming appointments</td></tr>`; return; }
+        tbody.innerHTML = upcoming.map(a=>`
+            <tr>
+                <td>${a.appointment_date}</td>
+                <td>${a.appointment_time}</td>
+                <td>${a.patient_name}</td>
+                <td>${a.reason || '-'}</td>
+                <td><span class="status ${String(a.status).toLowerCase()}">${a.status}</span></td>
+                <td><button class="btn btn-small btn-danger" onclick="updateStatus(${a.id}, 'Cancelled')">Cancel</button></td>
+            </tr>
+        `).join('');
+    }catch(err){console.error(err)}
+}
+
+async function loadAllAppointments(){
+    try{
+        const res = await fetch(`${API_URL}/appointments`);
+        const apps = await res.json();
+        const normalized = apps.map(a=>({...a, appointment_time: extractHHMM(a.appointment_time)}));
+        const myApps = normalized.filter(a=>a.doctor_id===doctorId);
+        const tbody = document.getElementById('allBody');
+        if(!myApps.length){ tbody.innerHTML = `<tr><td colspan="6">No appointments</td></tr>`; return; }
+        tbody.innerHTML = myApps.map(a=>`
+            <tr>
+                <td>${a.appointment_date}</td>
+                <td>${a.appointment_time}</td>
+                <td>${a.patient_name}</td>
+                <td>${a.reason||'-'}</td>
+                <td><span class="status ${String(a.status).toLowerCase()}">${a.status}</span></td>
+                <td>
+                    ${a.status==='Scheduled'
+                    ? `<button class="btn btn-small btn-success" onclick="onCompleteClicked(${a.id})">Complete</button><button class="btn btn-small btn-danger" onclick="updateStatus(${a.id}, 'Cancelled')">Cancel</button>`
+                    : '-'}
+                </td>
+            </tr>
+        `).join('');
+    }catch(err){console.error(err)}
+}
+
+async function loadPatients(){
+    try{
+        const resApps = await fetch(`${API_URL}/appointments`);
+        const resPats = await fetch(`${API_URL}/patients`);
+        const apps = await resApps.json();
+        const pats = await resPats.json();
+        const normalized = apps.map(a=>({...a, appointment_time: extractHHMM(a.appointment_time)}));
+        const count = {};
+        normalized.filter(a=>a.doctor_id===doctorId).forEach(a=>{ count[a.patient_name] = (count[a.patient_name]||0)+1; });
+        const myPatients = pats.filter(p=>count[p.name]);
+        const tbody = document.getElementById('patientsBody');
+        if(!myPatients.length){ tbody.innerHTML = `<tr><td colspan="5">No patients</td></tr>`; return; }
+        tbody.innerHTML = myPatients.map(p=>`<tr><td>${p.name}</td><td>${p.email}</td><td>${p.phone||'-'}</td><td>${p.gender||'-'}</td><td>${count[p.name]}</td></tr>`).join('');
+    }catch(err){console.error(err)}
+}
+
+async function loadRecords(){
+    try{
+        const res = await fetch(`${API_URL}/medical-records`);
+        const records = await res.json();
+        const myRecords = records.filter(r=>r.doctor_id===doctorId);
+        const tbody = document.getElementById('recordsBody');
+        if(!myRecords.length){ tbody.innerHTML = `<tr><td colspan="5">No records</td></tr>`; return; }
+        tbody.innerHTML = myRecords.map(r=>`<tr><td>${r.visit_date}</td><td>${r.patient_name}</td><td>${r.diagnosis}</td><td>${r.prescription||'-'}</td><td>${r.notes||'-'}</td></tr>`).join('');
+    }catch(err){console.error(err)}
+}
+
+/* ------------------ Complete flow → open modal with appointment data ------------------ */
+async function onCompleteClicked(appointmentId){
+    try{
+        const res = await fetch(`${API_URL}/appointments/${appointmentId}`);
+        if (!res.ok) return showAlert("Couldn't fetch appointment", "error");
+        const appt = await res.json();
+
+        if(!appt) return showAlert('Appointment not found', 'error');
+
+        pendingAppointmentToComplete = appointmentId;
+        document.getElementById('rec_appointment_id').value = appointmentId;
+        document.getElementById('rec_patient_name').value = appt.patient_name || '';
+        // appointment_date can be ISO or YYYY-MM-DD; extract safe date
+        const safeDate = appt.appointment_date ? String(appt.appointment_date).split('T')[0] : new Date().toISOString().split('T')[0];
+        document.getElementById('rec_date').value = safeDate;
+        document.getElementById('rec_diagnosis').value = '';
+        document.getElementById('rec_prescription').value = '';
+        document.getElementById('rec_notes').value = '';
+
+        openRecordModal();
+    }catch(err){console.error(err); showAlert('Error opening record modal','error');}
+}
+
+function openRecordModal(){ document.getElementById('recordModal').classList.add('show'); }
+function closeRecordModal(){ document.getElementById('recordModal').classList.remove('show'); pendingAppointmentToComplete = null; }
+function openNewRecordModal(){
+    pendingAppointmentToComplete = null;
+    document.getElementById('rec_appointment_id').value = '';
+    document.getElementById('rec_patient_name').value = '';
+    document.getElementById('rec_date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('rec_diagnosis').value = '';
+    document.getElementById('rec_prescription').value = '';
+    document.getElementById('rec_notes').value = '';
+    openRecordModal();
+}
+
+/* ------------------ Save medical record (and optionally complete appointment) ------------------ */
+async function saveMedicalRecord(alsoCompleteAppointment){
+    const apptId = document.getElementById('rec_appointment_id').value || null;
+    let patientId = null;
+
+    if (apptId) {
+        // fetch appointment to get patient_id
+        const res = await fetch(`${API_URL}/appointments/${apptId}`);
+        if (!res.ok) return showAlert('Failed to fetch appointment','error');
+        const appt = await res.json();
+        if (appt && appt.patient_id) patientId = appt.patient_id;
+        else return showAlert("Patient ID missing in appointment!", "error");
+    }
+
+    const payload = {
+        doctor_id: doctorId,
+        patient_id: patientId,
+        patient_name: document.getElementById('rec_patient_name').value || '',
+        visit_date: document.getElementById('rec_date').value,
+        diagnosis: document.getElementById('rec_diagnosis').value.trim(),
+        prescription: document.getElementById('rec_prescription').value.trim(),
+        notes: document.getElementById('rec_notes').value.trim()
+    };
+
+    if (!payload.diagnosis) return showAlert("Diagnosis is required", "error");
+
+    try {
+        const res = await fetch(`${API_URL}/medical-records`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const txt = await res.text();
+            throw new Error(txt || "Failed to save record");
+        }
+
+        showAlert("Medical record saved", "success");
+        closeRecordModal();
+        await loadRecords();
+
+        if (alsoCompleteAppointment && apptId) {
+            // mark appointment complete (no slot adjustments)
+            await updateStatus(Number(apptId), "Completed", { suppressConfirm: true });
+        } else {
+            await loadDashboardStats();
             loadTodayAppointments();
-        };
-
-        function logout() {
-            localStorage.removeItem('user');
-            window.location.href = 'login.html';
         }
 
-        async function findDoctorId() {
-            try {
-                const response = await fetch(`${API_URL}/doctors`);
-                const doctors = await response.json();
-                const doctor = doctors.find(d => d.email === currentUser.email);
-                if (doctor) {
-                    doctorId = doctor.id;
-                }
-            } catch (error) {
-                console.error('Error finding doctor:', error);
-            }
+    } catch (err) {
+        console.error(err);
+        showAlert("Error saving record: " + (err.message || err), "error");
+    }
+}
+
+/* ------------------ Update appointment status ------------------ */
+/* IMPORTANT: to avoid duplicate-slot errors we DON'T change appointment_date/appointment_time
+   unless absolutely necessary. We pass null for those fields so DB keeps the existing slot. */
+async function updateStatus(id, newStatus) {
+    try {
+        if (!confirm(`Mark appointment as ${newStatus}?`)) return;
+
+        const payload = { status: newStatus };  // ONLY THIS
+
+        const res = await fetch(`${API_URL}/appointments/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const err = await res.text();
+            throw new Error(err);
         }
 
-        function showTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(el => {
-                el.classList.remove('active');
-            });
-            document.querySelectorAll('.tab').forEach(el => {
-                el.classList.remove('active');
-            });
-            
-            document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
+        showAlert("Status updated successfully", "success");
 
-            if (tabName === 'today') loadTodayAppointments();
-            else if (tabName === 'upcoming') loadUpcomingAppointments();
-            else if (tabName === 'all') loadAllAppointments();
-            else if (tabName === 'patients') loadPatients();
-        }
+        // Refresh UI
+        loadAllAppointments();
 
-        async function loadDashboardStats() {
-            try {
-                const response = await fetch(`${API_URL}/appointments`);
-                const appointments = await response.json();
-                
-                const myAppointments = appointments.filter(apt => apt.doctor_id === doctorId);
-                const today = new Date().toISOString().split('T')[0];
-                const todayApts = myAppointments.filter(apt => apt.appointment_date === today);
-                const completed = myAppointments.filter(apt => apt.status === 'Completed');
-                
-                document.getElementById('todayAppointments').textContent = todayApts.length;
-                document.getElementById('totalAppointments').textContent = myAppointments.length;
-                document.getElementById('completedAppointments').textContent = completed.length;
-            } catch (error) {
-                console.error('Error loading stats:', error);
-            }
-        }
+    } catch (e) {
+        console.error(e);
+        showAlert("Error: " + e.message, "error");
+    }
+}
 
-        async function loadTodayAppointments() {
-            try {
-                const response = await fetch(`${API_URL}/appointments`);
-                const appointments = await response.json();
-                const today = new Date().toISOString().split('T')[0];
-                
-                const todayApts = appointments.filter(apt => 
-                    apt.doctor_id === doctorId && apt.appointment_date === today
-                );
-                
-                const tbody = document.getElementById('todayBody');
-                
-                if (todayApts.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><h3>No appointments today</h3><p>You have a free day!</p></td></tr>';
-                    return;
-                }
-                
-                tbody.innerHTML = todayApts.map(apt => `
-                    <tr>
-                        <td>${apt.appointment_time}</td>
-                        <td>${apt.patient_name}</td>
-                        <td>${apt.reason}</td>
-                        <td><span class="status ${apt.status.toLowerCase()}">${apt.status}</span></td>
-                        <td>
-                            <div class="action-buttons">
-                                ${apt.status === 'Scheduled' ? `
-                                    <button class="btn btn-small btn-success" onclick="updateStatus(${apt.id}, 'Completed')">Complete</button>
-                                    <button class="btn btn-small btn-danger" onclick="updateStatus(${apt.id}, 'Cancelled')">Cancel</button>
-                                ` : ''}
-                            </div>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (error) {
-                document.getElementById('todayBody').innerHTML = 
-                    '<tr><td colspan="5">Error loading appointments</td></tr>';
-            }
-        }
 
-        async function loadUpcomingAppointments() {
-            try {
-                const response = await fetch(`${API_URL}/appointments`);
-                const appointments = await response.json();
-                const today = new Date().toISOString().split('T')[0];
-                
-                const upcoming = appointments.filter(apt => 
-                    apt.doctor_id === doctorId && 
-                    apt.appointment_date > today &&
-                    apt.status === 'Scheduled'
-                );
-                
-                const tbody = document.getElementById('upcomingBody');
-                
-                if (upcoming.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><h3>No upcoming appointments</h3></td></tr>';
-                    return;
-                }
-                
-                tbody.innerHTML = upcoming.map(apt => `
-                    <tr>
-                        <td>${apt.appointment_date}</td>
-                        <td>${apt.appointment_time}</td>
-                        <td>${apt.patient_name}</td>
-                        <td>${apt.reason}</td>
-                        <td><span class="status ${apt.status.toLowerCase()}">${apt.status}</span></td>
-                        <td>
-                            <button class="btn btn-small btn-danger" onclick="updateStatus(${apt.id}, 'Cancelled')">Cancel</button>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (error) {
-                document.getElementById('upcomingBody').innerHTML = 
-                    '<tr><td colspan="6">Error loading appointments</td></tr>';
-            }
-        }
 
-        async function loadAllAppointments() {
-            try {
-                const response = await fetch(`${API_URL}/appointments`);
-                const appointments = await response.json();
-                
-                const myAppointments = appointments.filter(apt => apt.doctor_id === doctorId);
-                const tbody = document.getElementById('allBody');
-                
-                if (myAppointments.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><h3>No appointments found</h3></td></tr>';
-                    return;
-                }
-                
-                tbody.innerHTML = myAppointments.map(apt => `
-                    <tr>
-                        <td>${apt.appointment_date}</td>
-                        <td>${apt.appointment_time}</td>
-                        <td>${apt.patient_name}</td>
-                        <td>${apt.reason}</td>
-                        <td><span class="status ${apt.status.toLowerCase()}">${apt.status}</span></td>
-                        <td>
-                            ${apt.status === 'Scheduled' ? `
-                                <div class="action-buttons">
-                                    <button class="btn btn-small btn-success" onclick="updateStatus(${apt.id}, 'Completed')">Complete</button>
-                                    <button class="btn btn-small btn-danger" onclick="updateStatus(${apt.id}, 'Cancelled')">Cancel</button>
-                                </div>
-                            ` : '-'}
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (error) {
-                document.getElementById('allBody').innerHTML = 
-                    '<tr><td colspan="6">Error loading appointments</td></tr>';
-            }
-        }
+function showAlert(msg,type='success'){
+    const div = document.getElementById('alert-container');
+    div.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+    setTimeout(()=>div.innerHTML='',5000);
+}
+  </script>
 
-        async function loadPatients() {
-            try {
-                const [aptsRes, patientsRes] = await Promise.all([
-                    fetch(`${API_URL}/appointments`),
-                    fetch(`${API_URL}/patients`)
-                ]);
-                
-                const appointments = await aptsRes.json();
-                const patients = await patientsRes.json();
-                
-                const myPatients = {};
-                appointments.filter(apt => apt.doctor_id === doctorId).forEach(apt => {
-                    if (!myPatients[apt.patient_name]) {
-                        myPatients[apt.patient_name] = 0;
-                    }
-                    myPatients[apt.patient_name]++;
-                });
-                
-                const patientsList = patients.filter(p => myPatients[p.name]);
-                const tbody = document.getElementById('patientsBody');
-                
-                if (patientsList.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><h3>No patients yet</h3></td></tr>';
-                    return;
-                }
-                
-                tbody.innerHTML = patientsList.map(patient => `
-                    <tr>
-                        <td>${patient.name}</td>
-                        <td>${patient.email}</td>
-                        <td>${patient.phone}</td>
-                        <td>${patient.gender}</td>
-                        <td>${myPatients[patient.name] || 0}</td>
-                    </tr>
-                `).join('');
-            } catch (error) {
-                document.getElementById('patientsBody').innerHTML = 
-                    '<tr><td colspan="5">Error loading patients</td></tr>';
-            }
-        }
-
-        async function updateStatus(appointmentId, newStatus) {
-            if (!confirm(`Are you sure you want to mark this appointment as ${newStatus}?`)) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/appointments/${appointmentId}`);
-                const appointment = await response.json();
-                
-                appointment.status = newStatus;
-                
-                const updateResponse = await fetch(`${API_URL}/appointments/${appointmentId}`, {
-                    method: 'PUT',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(appointment)
-                });
-                
-                if (updateResponse.ok) {
-                    showAlert(`Appointment ${newStatus.toLowerCase()} successfully!`, 'success');
-                    loadDashboardStats();
-                    
-                    const activeTab = document.querySelector('.tab.active').textContent.toLowerCase();
-                    if (activeTab.includes('today')) loadTodayAppointments();
-                    else if (activeTab.includes('upcoming')) loadUpcomingAppointments();
-                    else loadAllAppointments();
-                } else {
-                    showAlert('Failed to update appointment', 'error');
-                }
-            } catch (error) {
-                showAlert('Error: ' + error.message, 'error');
-            }
-        }
-
-        function showAlert(message, type) {
-            const alertDiv = document.getElementById('alert-container');
-            alertDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
-            setTimeout(() => alertDiv.innerHTML = '', 5000);
-        }
-    </script>
 </body>
 </html>
